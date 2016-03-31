@@ -1,0 +1,12 @@
+Code running quicker for serial - reporting less memory for parallel but this could be wrong
+
+Fetch command - how do we have groups of remote references?
+
+Is fourier best/easiest example to implement, perhaps prefix sum as we have comparison code already
+
+References are available everywhere it seems,so long as you use fetch, however it is not practical to set a variable name for each of the references we would need.
+
+
+I still don't understand how I should go about parallelising my fourier code aside from the obvious placing of parallel directives around the odd and even splits
+
+explanations I've found online are written for mathematicians and involve stupid grey box diagrams that no one can understand.

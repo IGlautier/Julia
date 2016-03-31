@@ -16,12 +16,9 @@ function fftP(x)
 			j += 1
 		end
 		
-		#=fOdd = Array{Float64}(M)
-		fOdd = complex(fOdd)
-		fEven = Array{Float64}(M)
-		fEven = complex(fEven)=#
 		
 		fOdd = @spawn fftP(xOdd)
+		
 		fEven = @spawn fftP(xEven)
 		
 		# Gather
@@ -29,6 +26,7 @@ function fftP(x)
 		fE = fetch(fEven)
 		
 		X = Array{Float64}(N)
+
 		X = complex(X)
 		for k=1:M
 			X[k] = fE[k] + e^(-2*pi*k*im/N) * fO[k]
@@ -36,6 +34,8 @@ function fftP(x)
 		for k=M+1:N
 			X[k] = fE[k - M] + e^(-2*pi*k*im/N) * fO[k - M]
 		end
+		
+		
 		return X
 	end 
 end
