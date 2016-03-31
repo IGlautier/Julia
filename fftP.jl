@@ -1,4 +1,4 @@
-function fft(x)
+function fftP(x)
 	N = length(x)
 	M = Int64(N / 2)
 	if mod(N,2) > 0
@@ -19,20 +19,22 @@ function fft(x)
 		#=fOdd = Array{Float64}(M)
 		fOdd = complex(fOdd)
 		fEven = Array{Float64}(M)
-		fEven = complex(fEven)
-		=#
-		fOdd = fft(xOdd)
-		fEven = fft(xEven)
+		fEven = complex(fEven)=#
+		
+		fOdd = @spawn fftP(xOdd)
+		fEven = @spawn fftP(xEven)
 		
 		# Gather
+		fO = fetch(fOdd)
+		fE = fetch(fEven)
 		
 		X = Array{Float64}(N)
 		X = complex(X)
 		for k=1:M
-			X[k] = fEven[k] + e^(-2*pi*k*im/N) * fOdd[k]
+			X[k] = fE[k] + e^(-2*pi*k*im/N) * fO[k]
 		end
 		for k=M+1:N
-			X[k] = fEven[k - M] + e^(-2*pi*k*im/N) * fOdd[k - M]
+			X[k] = fE[k - M] + e^(-2*pi*k*im/N) * fO[k - M]
 		end
 		return X
 	end 
