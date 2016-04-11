@@ -6,7 +6,7 @@ function fft(x)
 	elseif N < 16
 		fourier(x)
 	else 
-		#Scatter
+	
 		xEven = Array{Float64}(M)
 		xOdd = Array{Float64}(M)
 		j = 1
@@ -15,17 +15,10 @@ function fft(x)
 			xEven[j] = x[i]
 			j += 1
 		end
-		
-		#=fOdd = Array{Float64}(M)
-		fOdd = complex(fOdd)
-		fEven = Array{Float64}(M)
-		fEven = complex(fEven)
-		=#
+	
 		fOdd = fft(xOdd)
 		fEven = fft(xEven)
-		
-		# Gather
-		
+
 		X = Array{Float64}(N)
 		X = complex(X)
 		for k=1:M
