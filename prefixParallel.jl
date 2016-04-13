@@ -1,41 +1,69 @@
-function prefixParallel(n)
+using MPI
 
-	if (n >= nprocs())
-		println("You need more processors!")
-		return
-	end
-	R = floor(log2(n))
-	
-	@everywhere rank = myid() - 1
-	input = Array(Int, n)
-	localVals = Array{RemoteRef}(n)
-	println("Inputs")
-	for i=1:n
-		input[i] = rand(0:9)
-		localVals[i] = @spawnat i+1 fetch(input[i])
-		println(input[i])
-	end
-	
-	for r=0:R-1
-		check = 2^r+1
-		hop = 2^r
-		@printf("Iteration %d \n", r)
-		for i=0:n-1
-			println(i)
-			if (rem(i, 2^(r+1) ) == 0)
-				@printf("%d + %d \n", i+1, i+1-hop)
-				localVals[i+1] = @spawnat i+2 fetch(localVals[i+1]) + fetch(localVals[i + 1 - hop])
-			end
-		end
-	end
-	
-	
-	println("Outputs")
-#=	for t=1:n
-		println(fetch(localVals[1]))
-	end=#
-	
+MPI.Init()
 
+comm = MPI.COMM_WORLD
+
+rank = MPI.Comm_rank(comm)
+size = MPI.Comm_size(comm)
+
+inputs = Array{Int64}(size)
+outputs = Array{Int64}(size)
+
+#Generate inputs
+if (rank == 0)
+	println("Selected $size integers with $size processes - to change this number rerun the programme with a different number of processes \n")
+	println("Input sequence is: \n")
 	
+	inputs = rand(1:9, size)
+
+	println("$inputs \n")
+
 end
+
+maxCalcs = log2(size)
+rxVal = zeros(Int, 1)
+
+#Send to processes
+localVal = MPI.Scatter(inputs, 1, 0, comm)
+
+#Up phase
+for i=0:1:maxCalcs
+	txCheck = 2^(i+1)
+	txOffst = 2^i
 	
+	if (((rank + txOffst + 1) % txCheck) == 0) && ((rank + txOffst) < size) 
+		MPI.Send(localVal, Int(rank + txOffst), Int(i), comm)
+		
+	elseif (((rank + 1) % txCheck) == 0) 
+		MPI.Recv!(rxVal, 1, Int(rank - txOffst), Int(i), comm)	
+		localVal += rxVal
+		
+	end
+end
+
+#Down phase
+for i=floor(maxCalcs):-1:1
+	txCheck = 2^i
+	txOffst = 2^(i-1)
+	
+	if (((rank + 1) % txCheck) == 0) && ((rank + txOffst) < size)
+		MPI.Send(localVal, Int(rank + txOffst), Int(i), comm)
+		
+	elseif ((rank + 1 - txOffst) % txCheck == 0) && ((rank - txOffst) > -1)
+		MPI.Recv!(rxVal, 1, Int(rank - txOffst), Int(i), comm)
+		localVal += rxVal
+		
+	end
+end
+
+#Gather
+outputs = MPI.Gather(localVal, 0, comm)
+
+if (rank == 0)
+	println("Output sequence is: \n")
+	println("$outputs")
+end
+
+
+MPI.Finalize()
