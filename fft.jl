@@ -1,11 +1,15 @@
 function fft(x)
 	N = length(x)
-	M = Int64(N / 2)
-	if mod(N,2) > 0
-		println("Input length must be a power of 2")
-	elseif N < 16
-		fourier(x)
+	
+	
+	if N == 1
+		#fourier(x)
+	#=	X = zeros(N)
+		X = complex(X)
+		X[1] = x[1] * e^(-2*pi*im)=#
+		return x
 	else 
+		M = Int64(N / 2)
 	
 		xEven = Array{Float64}(M)
 		xOdd = Array{Float64}(M)
@@ -15,18 +19,23 @@ function fft(x)
 			xEven[j] = x[i]
 			j += 1
 		end
+		
 	
 		fOdd = fft(xOdd)
 		fEven = fft(xEven)
 
-		X = Array{Float64}(N)
+		
+		X = zeros(N)
 		X = complex(X)
 		for k=1:M
-			X[k] = fEven[k] + e^(-2*pi*k*im/N) * fOdd[k]
+			f = e^(-2*pi*k*im/N)
+			X[k] = fEven[k] + f * fOdd[k]
+			X[k+M] = fEven[k] - f * fOdd[k]			
 		end
-		for k=M+1:N
-			X[k] = fEven[k - M] + e^(-2*pi*k*im/N) * fOdd[k - M]
+		for i=1:N
+			X[i] = sqrt(X[i].re^2 + X[i].im^2)
 		end
+
 		return X
 	end 
 end
